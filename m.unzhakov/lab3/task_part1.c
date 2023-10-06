@@ -9,9 +9,13 @@
 
 
 int main(int argv, char* argc[]) {
+    if (argv == 1) {
+        printf("you need to put your filepath into parameters of startup\n");
+        return 1;
+    }
     printf("real user id is: %d\neffective user id is: %d\n", getuid(), geteuid());
 
-    FILE* fin = fopen("file", "r");
+    FILE* fin = fopen(argc[1], "r");
 
     if (fin != NULL) {
         fclose(fin);
