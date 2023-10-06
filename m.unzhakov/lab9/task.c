@@ -29,6 +29,8 @@ int main(int argv, char* argc[]) {
         exit(0);
     }
     printf("text in the main process before waiting of child\n");
+    //дальше идет цикл, заставляющий родительский процесс ожидать подпроцессы(в данном случае 1 подпроцесс)
+    //почему-то, если не ожидать завершения подпроцессов, программа ожидает какой-то баш команды и не хочет выполнять то, что идет дальше.
     do {
         child_dummy = waitpid(child_proc, &status, 0);
         if (child_dummy == (pid_t)-1 && errno != EINTR)
