@@ -1,0 +1,3 @@
+/home/egor/cocojambo/NSU-OS-22930/e.romanchenko/lab3/cmake-build-debug/CMakeFiles/lab3.dir
+/home/egor/cocojambo/NSU-OS-22930/e.romanchenko/lab3/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/egor/cocojambo/NSU-OS-22930/e.romanchenko/lab3/cmake-build-debug/CMakeFiles/rebuild_cache.dir
