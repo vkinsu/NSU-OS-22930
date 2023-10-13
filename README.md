@@ -24,6 +24,8 @@
 3. теперь необходимо добавить ключ в стандартный путь git для этого можно выполнить следующее:
 `cp gitnsu ~/.ssh/` и затем
 `ssh-add ~/.ssh/gitnsu`
+З.Ы. Если у вас вазникает проблема ```Could not open a connection to your authentication agent.``` то запустите
+```eval `ssh-agent.exe` ``` на Windows в Git Bash и ``` eval $(ssh-agent) ``` на Linux
 
 
 # Третий с половиной этап
@@ -50,3 +52,12 @@
 
 
 Если при перезапуске терминала или Git Bash происходит ошибка permission denied повторите команду `ssh-add ~/.ssh/gitnsu` и затем напишите `git pull`
+
+
+
+# Четвертый Этап (работа с git)
+
+1. git init для инициализации репозитория
+2. git add <Путь к вашей папке> добавление в репозиторий
+3. git commit -m "<Что-то написать>" сделать коммит
+4. git push для загрузки на github
