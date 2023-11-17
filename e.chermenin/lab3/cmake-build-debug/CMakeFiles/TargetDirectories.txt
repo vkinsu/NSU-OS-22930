@@ -1,0 +1,3 @@
+D:/CLionProjects/NSU-OS-22930/e.chermenin/lab3/cmake-build-debug/CMakeFiles/lab3.dir
+D:/CLionProjects/NSU-OS-22930/e.chermenin/lab3/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/CLionProjects/NSU-OS-22930/e.chermenin/lab3/cmake-build-debug/CMakeFiles/rebuild_cache.dir
