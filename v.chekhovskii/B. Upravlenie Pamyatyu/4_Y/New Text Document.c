@@ -3,8 +3,8 @@
 #include <string.h>
 
 typedef struct linkedList {
-char line[128];
-struct linkedList* next;
+    char line[128];
+    struct linkedList* next;
 } linkedList;
 
 int main() {
