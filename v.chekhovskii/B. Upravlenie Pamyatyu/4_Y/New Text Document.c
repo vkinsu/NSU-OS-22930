@@ -3,16 +3,17 @@
 #include <string.h>
 
 typedef struct linkedList {
-    char line[128];
-    struct linkedList* next;
+char line[128];
+struct linkedList* next;
 } linkedList;
 
 int main() {
     linkedList lines;
     char lineBuffer[128];
+    lines.next = NULL;
 
     while (1) {
-        fgets(lineBuffer, 128, stdin);
+        fgets(lineBuffer, sizeof(lineBuffer), stdin);
         if (lineBuffer[0] == '.') { break; }
 
         linkedList* currLine = &lines;

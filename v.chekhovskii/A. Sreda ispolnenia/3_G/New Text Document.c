@@ -18,7 +18,7 @@ int main() {
     // match real and effective user ids
     setuid(geteuid());
     printf("Real user id: %d\n", getuid());
-    printf("Effective user id: %d\n\n", geteuid());
+    printf("Effective user id: %d\n", geteuid());
 
     return 0;
 }
