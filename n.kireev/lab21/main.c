@@ -23,10 +23,10 @@ void quitHandler(int dummy)
 
 int main(void)
 {
-    signal(SIGINT, intHandler);
+    signal(SIGQUIT, quitHandler);
     while (1)
     {
-        signal(SIGQUIT, quitHandler);
+        signal(SIGINT, intHandler);
         char c = getc(stdin);
     }
 }
