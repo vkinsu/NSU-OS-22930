@@ -17,16 +17,16 @@ void intHandler(int dummy)
 
 void quitHandler(int dummy)
 {
-    printf("Signal beeped %d times. Endstation.Eden\n");
+    printf("Signal beeped %d times. Endstation.Eden\n", num);
     exit(0);
 }
 
 int main(void)
 {
     signal(SIGINT, intHandler);
-    signal(SIGQUIT, quitHandler);
     while (1)
     {
+        signal(SIGQUIT, quitHandler);
         char c = getc(stdin);
     }
 }
