@@ -18,7 +18,7 @@ int main() {
         printf("\nGotcha. Exiting the program...\n");
         return 0;
     }
-    FILE* f_file = open(file, O_RDONLY);
+    int f_file = open(file, O_RDONLY);
     if (f_file == -1) {
         perror("\nFailed to open file");
         return 1;

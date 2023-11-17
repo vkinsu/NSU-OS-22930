@@ -10,9 +10,10 @@ typedef struct linkedList {
 int main() {
     linkedList lines;
     char lineBuffer[128];
+    lines.next = NULL;
 
     while (1) {
-        fgets(lineBuffer, 128, stdin);
+        fgets(lineBuffer, sizeof(lineBuffer), stdin);
         if (lineBuffer[0] == '.') { break; }
 
         linkedList* currLine = &lines;
