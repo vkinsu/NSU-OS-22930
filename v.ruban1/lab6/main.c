@@ -51,13 +51,13 @@ int main() {
             lineTable[lineNumber].length = MAX_LINE_LENGTH;
             lineNumber++;
 
-            offset = lseek(fd, 0, SEEK_CUR);  // Сохраняем текущий отступ
+            offset = lseek(fd, 0, SEEK_CUR);
         } else {
             offset++;
         }
     }
 
-    alarm(0);  // Отменяем таймер
+    alarm(0);
 
     if (!timeout_flag) {
         while (1) {
@@ -78,7 +78,7 @@ int main() {
             }
         }
     } else {
-        lseek(fd, 0, SEEK_SET);  // Возвращаемся в начало файла
+        lseek(fd, 0, SEEK_SET);
 
         while (read(fd, buffer, sizeof(buffer)) > 0) {
             printf("%s", buffer);
