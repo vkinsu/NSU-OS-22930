@@ -14,6 +14,7 @@ main() {
         printf("Attempting to run cat from child process...\n");
         execlp("cat", "cat", "file.txt", NULL);
         perror("Unable to run cat from child process");
+        return -1;
     }
     else {
         pid_t status = 9999; // we can safely do this, as exit codes are limited to range 0-255 only.
