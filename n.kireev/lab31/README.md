@@ -4,7 +4,7 @@ Like in lab 30, write in console:
 ```
 
 How to check work on clients > 1?
-First of all, you need to write:
+First of all, on main mashine, who built the server, you need to write:
 ```
   chmod 777 qwerty12345656
 ```
@@ -14,4 +14,4 @@ After that in other mashines we need to start client work:
 ```
   ./client
 ```
-All output will be on main stdout of main mashine, who build the server.
+All output will be on main stdout of main mashine, who built the server.
