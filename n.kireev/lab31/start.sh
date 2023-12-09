@@ -1,3 +1,3 @@
 make -f Makefile
 ./server &
-./client
+chmod 777 qwerty123456
