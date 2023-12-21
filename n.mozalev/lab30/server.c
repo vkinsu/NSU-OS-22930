@@ -6,7 +6,7 @@
 #include <sys/un.h>
 #include <ctype.h>
 
-#define SOCKET_PATH "/tmp/socket_example"
+#define SOCKET_PATH "/tmp/task30"
 
 int main() {
     int server_socket, client_socket;

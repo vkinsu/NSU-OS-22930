@@ -5,7 +5,17 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#define SOCKET_PATH "/tmp/socket_example"
+#define SOCKET_PATH "/tmp/task31"
+
+
+void sendTextToServer(int client_socket, const char* text) {
+    send(client_socket, text, strlen(text), 0);
+}
+
+void receiveDataFromServer(int client_socket, char* buffer, size_t buffer_size) {
+    ssize_t bytes_received = recv(client_socket, buffer, buffer_size - 1, 0);
+    buffer[bytes_received] = '\0';
+}
 
 int main() {
     int client_socket;
@@ -26,13 +36,14 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    char text[] = "HeLlo From 2007!";
-    printf("Отправлено на сервер: %s\n", text);
-    send(client_socket, text, strlen(text), 0);
-
+ 
+    char text[1024];
+    printf("введите текст для отправки на сервер: ");
+    fgets(text, sizeof(text), stdin);
+    sendTextToServer(client_socket, text);
+ 
     char buffer[1024];
-    ssize_t bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
-    buffer[bytes_received] = '\0';
+    receiveDataFromServer(client_socket, buffer, sizeof(buffer));
 
     printf("Получено от сервера: %s\n", buffer);
 

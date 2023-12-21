@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define SOCKET_PATH "/tmp/socket_example"
+#define SOCKET_PATH "/tmp/task31"
 #define MAX_CLIENTS 5
 
 int main() {

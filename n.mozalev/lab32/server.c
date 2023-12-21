@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include <sys/un.h>
 
-#define SOCKET_PATH "/tmp/socket_example"
+#define SOCKET_PATH "/tmp/task32"
 
 void on_read(struct bufferevent *bev, void *ctx) {
     char buffer[1024];
