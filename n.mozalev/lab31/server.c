@@ -10,8 +10,10 @@
 
 #define SOCKET_PATH "/tmp/task31"
 #define MAX_CLIENTS 5
+int connected_clients = 0;
 
 int main() {
+	unlink(SOCKET_PATH);
     int server_socket, client_sockets[MAX_CLIENTS], max_sd, activity, i, sd;
     socklen_t client_length;
     struct sockaddr_un server_address, client_address;
@@ -49,6 +51,7 @@ int main() {
     }
 
     while (1) {
+    	
         FD_ZERO(&readfds);
         FD_SET(server_socket, &readfds);
         max_sd = server_socket;
@@ -99,10 +102,18 @@ int main() {
             if (FD_ISSET(sd, &readfds)) {
                 ssize_t bytes_received = recv(sd, buffer, sizeof(buffer), 0);
                 if (bytes_received == 0) {
-
-                    printf("Клиент отключен\n");
+					if (bytes_received == 0) {
+                        printf("Клиент отключился\n");
+                    } else {
+                        perror("Ошибка получения данных\n");
+                    } 
                     close(sd);
                     client_sockets[i] = 0;
+					connected_clients--;
+
+    	    		if (connected_clients == 0) {
+       		     		break;
+        			}
                 } else {
 
                     buffer[bytes_received] = '\0';

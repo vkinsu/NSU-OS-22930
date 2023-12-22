@@ -9,6 +9,7 @@
 #define SOCKET_PATH "/tmp/task30"
 
 int main() {
+	unlink(SOCKET_PATH);
     int server_socket, client_socket;
     socklen_t client_length;
     struct sockaddr_un server_address, client_address;
