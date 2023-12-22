@@ -1,93 +1,64 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#define SERVER "./qwerty123456"
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <unistd.h> 
+#include <sys/types.h> 
+#include <sys/socket.h> 
+#include <sys/un.h> 
 
-void print_upper(char* buf)
-{
-    int i = 0;
-    while (buf[i] != '\0')
-    {
-        char c = putchar(toupper(buf[i]));
-        i++;
-        printf("%c", c);
+char myToupper(char a) {
+    if (a >= 97) {
+        return a - 32;
     }
+    else return a;
 }
 
-int main()
-{
-    unlink(SERVER);
-    int sock, listener;
+int main() { 
+    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0); 
+    if (sockfd == -1) { 
+        perror("socket"); 
+        exit(EXIT_FAILURE); 
+    } 
+
+    unlink("/tmp/socket");
+
     struct sockaddr_un addr;
-    char buf[1024];
-    int bytes_read;
-
-    listener = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (listener < 0)
-    {
-        perror("Socket creation error");
-        exit(1);
-    }
-
-    memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, SERVER);
-    if (bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0)
-    {
-        perror("Binding of listener error");
-        exit(2);
+    strncpy(addr.sun_path, "/tmp/socket", sizeof(addr.sun_path) - 1);
+
+    if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        perror("bind");
+        close(sockfd);
+        exit(EXIT_FAILURE);
     }
+ 
+    if (listen(sockfd, 5) == -1) {
+        perror("listen");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    } 
 
-    if (listen(listener, 7) < 0)
-    {
-        perror("Listening error");
-        exit(3);
+    printf("Сервер ожидает подключения...\n"); 
+ 
+    // Принятие подключения 
+    int client_sockfd = accept(sockfd, NULL, NULL);
+
+    if (client_sockfd == -1) {
+        perror("accept");
+        close(sockfd);
+        exit(EXIT_FAILURE);
     }
+ 
+    printf("Клиент подключен!\n"); 
 
-    int flag = 0;
-    while (1)
-    {
-        sock = accept(listener, NULL, NULL);
+    char buf;
 
-        if (sock < 0)
-        {
-            perror("Acception error");
-            continue;
-        }
+    while (read(client_sockfd, &buf, 1) != 0) {
+        printf("%c", myToupper(buf));
+    } 
 
-        while(1)
-        {
-            bytes_read = recv(sock, buf, 1024, 0);
-            if (bytes_read <= 0)
-            {
-                flag = 1;
-                break;
-            }
-            int i = 0;
-            while (buf[i] != '\0')
-            {
-                putchar(toupper(buf[i]));
-                i++;
-            }
-            //putchar('\n');
-        }
+    close(client_sockfd);
+    close(sockfd);
 
-        close(sock);
-
-        if (flag)
-        {
-            break;
-        }
-    }
-    close(listener);
-    unlink(SERVER);
+    unlink("/tmp/socket");
     return 0;
 }

@@ -1,105 +1,113 @@
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <aio.h>
-#include <errno.h>
-#include <signal.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#define SERVER "./qwerty123456"
-
-int num = 0;
-
-void handler(int sig, siginfo_t* info, void* ucontext)
-{
-	struct aiocb** my_aiocb = info->si_value.sival_ptr;
-	for (int i = 0; i < num; i++)
-	{
-		if (aio_return(my_aiocb[i]) != 0)
-		{
-			int j = 0;
-			while (1)
-			{
-				if (((char*)my_aiocb[i]->aio_buf)[j] == '\0')
-				{
-					break;
-				}
-				putchar(toupper(((char*)my_aiocb[i]->aio_buf)[j]));
-				j++;
-			}
-			memset((void*)my_aiocb[i]->aio_buf, 0, sizeof(my_aiocb[i]->aio_buf));
-		}
-	}
-	return;
-}
-
-int main()
-{
-	unlink(SERVER);
-	int sock, listener;
-	struct sockaddr_un addr;
-
-	struct sigaction sa;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_SIGINFO;
-	sa.sa_sigaction = handler;
-	sigaction(SIGALRM, &sa, NULL);
-
-	listener = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (listener < 0)
-	{
-		perror("Socket creation error");
-		exit(1);
-	}
-
-	memset(&addr, 0, sizeof(addr));
-	addr.sun_family = AF_UNIX;
-	strcpy(addr.sun_path, SERVER);
-	if (bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0)
-	{
-		perror("Binding of listener error");
-		exit(2);
-	}
-
-	if (listen(listener, 78) < 0)
-	{
-		perror("Listening error");
-		exit(3);
-	}
-
-	struct aiocb** all_aiocb = (struct aiocb**)malloc((num + 2) * sizeof(struct aiocb*));
-
-	struct sigevent my_sigev;
-	my_sigev.sigev_notify = SIGEV_SIGNAL;
-	my_sigev.sigev_signo = SIGALRM;
-	my_sigev.sigev_value.sival_ptr = all_aiocb;
-
-	while (1)
-	{
-		sigaction(SIGALRM, &sa, NULL);
-		if (num > 0)
-		{
-			lio_listio(LIO_NOWAIT, all_aiocb, num, &my_sigev);
-		}
-		sock = accept(listener, 0, 0);
-		if (sock < 0)
-		{
-			continue;
-		}
-
-		all_aiocb = (struct aiocb**)realloc(all_aiocb, (num + 2) * sizeof(struct aiocb*));
-
-		printf("SOCKET: %d\n", sock);
-		all_aiocb[num] = (struct aiocb*)calloc(1, sizeof(struct aiocb));
-		all_aiocb[num]->aio_buf = (char*)calloc(1024, sizeof(char));
-		all_aiocb[num]->aio_fildes = sock;
-		all_aiocb[num]->aio_nbytes = 1024;
-		all_aiocb[num]->aio_offset = 0;
-		all_aiocb[num]->aio_lio_opcode = LIO_READ;
-
-		num = num + 1;
-	}
+#include <stdio.h> 
+#include <unistd.h> 
+#include <sys/socket.h> 
+#include <sys/un.h> 
+#include <stdlib.h> 
+#include <strings.h> 
+#include <ctype.h> 
+#include <aio.h> 
+#include <signal.h> 
+ 
+#define BUFFER_SIZE (100) 
+ 
+char socket_path[] = "/tmp/socket"; 
+ 
+// Функция для создания структуры aiocb для асинхронного ввода-вывода 
+struct aiocb *create_request(int socket) { 
+    struct aiocb *request = calloc(1, sizeof(struct aiocb)); 
+ 
+    // Настройка параметров запроса 
+    request->aio_fildes = socket; 
+    request->aio_buf = malloc(BUFFER_SIZE); 
+    request->aio_nbytes = BUFFER_SIZE; 
+ 
+    // Настройка параметров уведомления 
+    request->aio_sigevent.sigev_notify = SIGEV_SIGNAL; 
+    request->aio_sigevent.sigev_signo = SIGIO; 
+    // Будет передано обработчику сигнала 
+    request->aio_sigevent.sigev_value.sival_ptr = request; 
+ 
+    return request; 
+} 
+ 
+// Обработчик сигнала SIGIO 
+void event_handler(int sig, siginfo_t *info, void *context) { 
+    if (sig != SIGIO || info->si_signo != SIGIO) return; 
+ 
+    struct aiocb *request = info->si_value.sival_ptr; 
+    if (aio_error(request) == 0) { 
+        int size = aio_return(request); 
+        char *buffer = (char *) request->aio_buf; 
+ 
+        if (size == 0) { 
+            // Достигнут конец файла (EOF) 
+            printf("EOF reached, closing connection\n"); 
+            close(request->aio_fildes); 
+ 
+            free(buffer); 
+            free(request); 
+ 
+            return; 
+        } 
+ 
+        // Преобразование символов в верхний регистр и вывод на экран 
+        for (int i = 0; i < size; i++) { 
+            int c = toupper(buffer[i]); 
+            printf("%c", c); 
+        } 
+ 
+        // Планирование следующего чтения 
+        aio_read(request); 
+    } 
+} 
+ 
+int main() { 
+    int fd, cl; 
+ 
+    // Создание сокета 
+    if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) { 
+        perror("socket error"); 
+        exit(-1); 
+    } 
+ 
+    struct sockaddr_un addr; 
+    memset(&addr, 0, sizeof(addr)); 
+    addr.sun_family = AF_UNIX; 
+    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1); 
+ 
+    unlink(socket_path); 
+ 
+    // Привязка сокета к адресу 
+    if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) == -1) { 
+        perror("bind error"); 
+        exit(-1); 
+    } 
+ 
+    // Ожидание соединений 
+    if (listen(fd, 5) == -1) { 
+        perror("listen error"); 
+        exit(-1); 
+    } 
+ 
+    // Установка обработчика сигнала 
+    struct sigaction action; 
+    memset(&action, 0, sizeof(action)); 
+    action.sa_sigaction = event_handler; 
+    action.sa_flags = SA_SIGINFO | SA_RESTART; 
+    sigaction(SIGIO, &action, NULL); 
+ 
+    while (1) { 
+        // Принятие нового соединения 
+        if ((cl = accept(fd, NULL, NULL)) == -1) { 
+            perror("accept error"); 
+            continue; 
+        } 
+ 
+        // Создание структуры aiocb и запуск асинхронного чтения 
+        struct aiocb *request = create_request(cl); 
+        if (aio_read(request) == -1) { 
+            perror("aio_read error"); 
+            exit(-1); 
+        } 
+    } 
 }

@@ -1,95 +1,132 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#define SERVER "./qwerty123456"
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <unistd.h> 
+#include <sys/types.h> 
+#include <sys/socket.h> 
+#include <sys/un.h> 
+#include <string.h> 
+ 
+#define MAX_CLIENTS 10 
+ 
+struct client_info { 
+    int sockfd; 
+    // Дополнительные данные о клиенте могут быть добавлены здесь 
+}; 
 
-int main()
-{
-    unlink(SERVER);
-    int sock, listener;
-    struct sockaddr_un addr;
-    char buf[1024];
-    int bytes_read;
-
-    listener = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (listener < 0)
-    {
-        perror("Socket creation error");
-        exit(1);
+char myToupper(char a) {
+    if (a >= 97) {
+        return a - 32;
     }
+    else return a;
+}
+ 
+int main() { 
+    unlink("/tmp/socket");
+    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0); 
+    if (sockfd == -1) { 
+        perror("socket"); 
+        exit(EXIT_FAILURE); 
+    } 
+ 
+    struct sockaddr_un addr; 
+    addr.sun_family = AF_UNIX; 
+    strncpy(addr.sun_path, "/tmp/socket", sizeof(addr.sun_path) - 1); 
+ 
+    if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) { 
+        perror("bind"); 
+        close(sockfd); 
+        exit(EXIT_FAILURE); 
+    } 
+ 
+    listen(sockfd, SOMAXCONN); 
+ 
+    printf("Сервер ожидает подключения...\n"); 
+ 
+    struct client_info clients[MAX_CLIENTS]; 
+    fd_set read_fds, active_fds; 
+ 
+    FD_ZERO(&active_fds); 
+    FD_SET(sockfd, &active_fds); 
 
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, SERVER);
-    if (bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0)
-    {
-        perror("Binding of listener error");
-        exit(2);
-    }
+    while (1) { 
+        printf("1\n");
+        read_fds = active_fds; 
+ 
+        if (select(FD_SETSIZE, &read_fds, NULL, NULL, NULL) == -1) { 
+            perror("select"); 
+            break; 
+        } 
+ 
+        for (int fd = 0; fd < FD_SETSIZE; fd++) { 
+            printf("2");
+            if (FD_ISSET(fd, &read_fds)) { 
+                if (fd == sockfd) { 
+                    // Новое подключение 
+                    int client_sockfd = accept(sockfd, NULL, NULL); 
+                    if (client_sockfd == -1) { 
+                        perror("accept"); 
+                        break; 
+                    } 
 
-    if (listen(listener, 7) < 0)
-    {
-        perror("Listening error");
-        exit(3);
-    }
-
-    fd_set read_fds;
-    int max_fd;
-
-    while (1) {
-        FD_ZERO(&read_fds);
-        FD_SET(listener, &read_fds);
-        max_fd = listener;
-
-        if (select(max_fd + 1, &read_fds, 0, 0, 0) < 0)
-        {
-            perror("Selection error");
-            exit(4);
-        }
-
-        if (FD_ISSET(listener, &read_fds))
-        {
-            sock = accept(listener, 0, 0);
-            if (sock < 0)
-            {
-                perror("Acception error");
-                continue;
-            }
-
-            FD_SET(sock, &read_fds);
-            if (sock > max_fd) {
-                max_fd = sock;
-            }
-        }
-
-        for (int now = listener + 1; now <= max_fd; ++now)
-        {
-            if (FD_ISSET(now, &read_fds))
-            {
-                while (1)
-                {
-                    bytes_read = recv(now, buf, 1024, 0);
-                    if (bytes_read <= 0)
-                    {
-                        break;
-                    }
-                    int i = 0;
-                    while (buf[i] != '\0')
-                    {
-                        putchar(toupper(buf[i]));
-                        i++;
-                    }
-                }
-            }
-        }
-    }
-
-    //  Server forever, because no one said, that I need to crush it
-    return 0;
+                    printf("Клиент подключен (fd=%d)!\n", client_sockfd); 
+ 
+                    FD_SET(client_sockfd, &active_fds); 
+ 
+                    // Добавить данные о клиенте в массив clients 
+                    // (здесь может потребоваться использование динамического выделения памяти) 
+ 
+                    // Пример: 
+                    int i; 
+                    for (i = 0; i < MAX_CLIENTS; ++i) { 
+                        if (clients[i].sockfd == 0) { 
+                            clients[i].sockfd = client_sockfd; 
+                            break; 
+                        } 
+                    } 
+ 
+                    if (i == MAX_CLIENTS) { 
+                        fprintf(stderr, "Превышено максимальное количество клиентов.\n"); 
+                        close(client_sockfd); 
+                    } 
+                } 
+                else { 
+                    // Данные от клиента 
+                    char buffer[1024]; 
+                    int bytes_received = recv(fd, buffer, sizeof(buffer), 0); 
+                    if (bytes_received <= 0) { 
+                        // Разрыв соединения или ошибка 
+                        printf("Клиент отключен (fd=%d)!\n", fd); 
+                        close(fd); 
+                        FD_CLR(fd, &active_fds); 
+ 
+                        // Удалить данные о клиенте из массива clients 
+                        // (может потребоваться дополнительная логика) 
+                        for (int i = 0; i < MAX_CLIENTS; ++i) { 
+                            if (clients[i].sockfd == fd) { 
+                                clients[i].sockfd = 0; 
+                                break; 
+                            } 
+                        } 
+                    } else { 
+                        // Обработка данных от клиента (пример) 
+                        buffer[bytes_received] = '\0'; 
+                        printf("Получены данные от клиента (fd=%d): %s\n", fd, buffer); 
+                    } 
+                } 
+            } 
+        } 
+    } 
+ 
+    // Закрытие всех активных сокетов 
+    for (int i = 0; i < MAX_CLIENTS; ++i) { 
+        if (clients[i].sockfd != 0) { 
+            close(clients[i].sockfd); 
+        } 
+    } 
+ 
+    // Закрытие сокета сервера 
+    close(sockfd); 
+    unlink("/tmp/socket");
+ 
+    return 0; 
 }
