@@ -9,6 +9,7 @@
 #include <sys/un.h>
 
 #define SOCKET_PATH "/tmp/task32"
+int num_clients = 0;
 
 void on_read(struct bufferevent *bev, void *ctx) {
     char buffer[1024];
@@ -33,6 +34,11 @@ void on_event(struct bufferevent *bev, short events, void *ctx) {
         perror("Ошибка в bufferevent");
     }
     bufferevent_free(bev);
+	num_clients--;
+    if (num_clients == 0) {
+        struct event_base *base = bufferevent_get_base(bev);
+        event_base_loopexit(base, NULL);
+    }
 }
 
 void on_accept(struct evconnlistener *listener, evutil_socket_t fd,
@@ -47,9 +53,12 @@ void on_accept(struct evconnlistener *listener, evutil_socket_t fd,
 
 
     bufferevent_enable(bev, EV_READ | EV_WRITE);
+	num_clients++;
+
 }
 
 int main() {
+	unlink(SOCKET_PATH);
     struct event_base *base = event_base_new();
     if (!base) {
         fprintf(stderr, "Ошибка создания базы событий\n");
