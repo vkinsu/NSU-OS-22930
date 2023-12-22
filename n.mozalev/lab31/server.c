@@ -85,7 +85,7 @@ int main() {
             }
 
             printf("Подключено клиентом\n");
-
+			connected_clients++;
 
             for (i = 0; i < MAX_CLIENTS; i++) {
                 if (client_sockets[i] == 0) {
@@ -101,7 +101,7 @@ int main() {
 
             if (FD_ISSET(sd, &readfds)) {
                 ssize_t bytes_received = recv(sd, buffer, sizeof(buffer), 0);
-                if (bytes_received == 0) {
+                if (bytes_received <= 0) {
 					if (bytes_received == 0) {
                         printf("Клиент отключился\n");
                     } else {
@@ -112,7 +112,8 @@ int main() {
 					connected_clients--;
 
     	    		if (connected_clients == 0) {
-       		     		break;
+                        printf("Клиенты закончились\n");
+       		     		return 0;
         			}
                 } else {
 
