@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "string.h": "c",
+        "system_error": "c",
+        "select.h": "c",
+        "un.h": "c",
+        "socket.h": "c",
+        "unistd.h": "c",
+        "inet.h": "c",
+        "epoll.h": "c"
+    }
+}
