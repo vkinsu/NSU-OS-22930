@@ -12,6 +12,7 @@
 #define MAX_CLIENTS 5
 
 int main() {
+    unlink(SOCKET_PATH);
     int server_socket = socket(AF_UNIX, SOCK_STREAM, 0);
     if (server_socket == -1) {
         perror("Error creating socket");

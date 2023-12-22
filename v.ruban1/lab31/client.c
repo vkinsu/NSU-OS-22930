@@ -1,29 +1,47 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <string.h>
-
-#define SOCKET_PATH "/tmp/my_unix_socket"
-#define BUFFER_SIZE 256
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <unistd.h> 
+#include <sys/types.h> 
+#include <sys/socket.h> 
+#include <sys/un.h> 
+#include <string.h> 
 
 int main() {
-    int client_socket = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (client_socket == -1) {
-        perror("Error creating socket");
+    char message[100];
+
+
+    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0); 
+
+    if (sockfd == -1) { 
+        perror("socket"); 
+        exit(EXIT_FAILURE); 
+    } 
+ 
+    struct sockaddr_un addr; 
+    addr.sun_family = AF_UNIX; 
+    strncpy(addr.sun_path, "/tmp/my_unix_socket", sizeof(addr.sun_path) - 1);
+ 
+    if (connect(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) { 
+        close(sockfd);
         exit(EXIT_FAILURE);
+    } 
+
+    printf("Подключено\n"); 
+    
+    for(int i =0; i<3;i++){
+        scanf("%s", message);
+        // const char *message = "Hello, server!\0"; 
+        if (write(sockfd, message, strlen(message)) == -1) {
+            perror("write");
+            close(sockfd);
+            exit(EXIT_FAILURE);
+        }
+
     }
 
-    struct sockaddr_un server_addr;
-    server_addr.sun_family = AF_UNIX;
-    strncpy(server_addr.sun_path, SOCKET_PATH, sizeof(server_addr.sun_path) - 1);
+    printf("Записано\n"); 
 
-    if (connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
-        perror("Error connecting to server");
-        close(client_socket);
-        exit(EXIT_FAILURE);
-    }
+    close(sockfd);
 
-    const char *message = "Hello, server!\n";
-
+    return 0;
+}
